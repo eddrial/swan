@@ -94,7 +94,7 @@ def refinedata(meas, null, ref):
         #do background sub
         bgsub = np.zeros(meas[key]['data'].shape)
         bgsub[:,0] = meas[key]['data'][:,0]
-        bgsub[:,1:3] = meas[key]['data'][:,1:2] - (null[nullkeys[0]]['data'][:,1:2]+null[nullkeys[1]]['data'][:,1:2])/2.0
+        bgsub[:,1:3] = meas[key]['data'][:,1:3] - (null[nullkeys[0]]['data'][:,1:3]+null[nullkeys[1]]['data'][:,1:3])/2.0
         meas[key]['bgsub'] = bgsub
         
         #do refnormalisation
