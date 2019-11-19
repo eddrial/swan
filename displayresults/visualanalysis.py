@@ -76,27 +76,45 @@ def maxmin_data(datadictionary):
     return MaxMinYZ
 
 #refine data
+
+def backgroundsub(null,nullkeys):
+    pass
+
 def refinedata(meas, null, ref):
     
     #for item in meas, get timestamp
     for key in meas:
         ts = meas[key]['timestamp']
         #find null before/after
-        nullkeys = timeneighbours(timestmp, null)
+        nullkeys = timeneighbours(ts, null)
         
-    #find ref before
-    #find ref after
-    refkeys = timeneighbours(timestmp, ref)
+        #find ref before/after
+        refkeys = timeneighbours(ts, ref)
+        
+        #do background sub
+        bgsub = np.zeros(meas[key]['data'].shape)
+        bgsub[:,0] = meas[key]['data'][:,0]
+        bgsub[:,1:3] = meas[key]['data'][:,1:2] - (null[nullkeys[0]]['data'][:,1:2]+null[nullkeys[1]]['data'][:,1:2])/2.0
+        meas[key]['bgsub'] = bgsub
+        
+        #do refnormalisation
+        meas[key]['refnormal'] = 'TODO'
     
-    meas[key]['bgsub'] = databackgroundsubtracted
-    
-    meas[key]['refnormal'] = datarefnormalised
+    #meas[key]['refnormal'] = datarefnormalised
     
     
     return meas
 
 def timeneighbours(timestmp, dict):
-    keys = ['a','b']
+    #this is ugly as sin
+    dictlist = [(key,dict[key]['timestamp']) for key in dict.keys()]
+    dictlist.sort(key = itemgetter(1))
+    a = np.zeros(len(dictlist))
+    
+    for i in range(len(a)):
+        a[i]= timestmp<dictlist[i][1]
+    
+    keys = [dictlist[np.argmax(a)-1][0],dictlist[np.argmax(a)][0]]
     
     return keys
 
@@ -289,9 +307,9 @@ if __name__ == '__main__':
     #n1 = plotnulldata(nulldata)
     #n1.savefig('M:\Work\Measurements\UE56SESA\nullplot.pdf')
     
-    r1a, r1b = plotrefdata(refdata)
-    r1a.savefig('M:\Work\Measurements\UE56SESA\\refblockplot1.pdf')
-    r1b.savefig('M:\Work\Measurements\UE56SESA\\refblockplot2.pdf')
+    #r1a, r1b = plotrefdata(refdata)
+    #r1a.savefig('M:\Work\Measurements\UE56SESA\\refblockplot1.pdf')
+    #r1b.savefig('M:\Work\Measurements\UE56SESA\\refblockplot2.pdf')
     
     #null before and after measurements
     #pass in measdict, nulldict, refdict, return measdict enhanced with refnormalised and averagenull
