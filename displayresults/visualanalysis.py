@@ -80,6 +80,28 @@ def maxmin_data(datadictionary):
 def backgroundsub(null,nullkeys):
     pass
 
+def calcday0ref(dict):
+    copydict = dict.copy()
+    dictlist = [(key,copydict[key]['timestamp']) for key in copydict.keys()]
+    dictlist.sort(key = itemgetter(1))
+    
+    a = np.zeros(len(dictlist))
+    
+    day0 = copydict[dictlist[0][0]]['timestamp'].date()
+    
+    for i in range(len(a)):
+        a[i] = day0 < dictlist[i][1].date()
+    
+    for i in range(np.argmax(a)-2,len(a)):
+        copydict.pop(dictlist[i][0])
+    
+    day0ref = mean_data(dict)
+    
+    return day0ref
+    
+    
+    
+
 def refinedata(meas, null, ref):
     
     #for item in meas, get timestamp
@@ -98,7 +120,13 @@ def refinedata(meas, null, ref):
         meas[key]['bgsub'] = bgsub
         
         #do refnormalisation
-        meas[key]['refnormal'] = 'TODO'
+        refnormal = np.zeros(meas[key]['data'].shape)
+        refnormal[:,0] = meas[key]['data'][:,0]
+        day0ref = calcday0ref(ref)
+        refnormal[:,1:3] = np.divide(np.multiply(bgsub[:,1:3],day0ref[:,1:3]), (ref[refkeys[0]]['data'][:,1:3]+ref[refkeys[1]]['data'][:,1:3])/2.0)
+        
+        
+        meas[key]['refnormal'] = refnormal
     
     #meas[key]['refnormal'] = datarefnormalised
     
@@ -315,22 +343,9 @@ if __name__ == '__main__':
     #pass in measdict, nulldict, refdict, return measdict enhanced with refnormalised and averagenull
     refined_data = refinedata(measdata, nulldata, refdata)
     
-     
-    #subtract to average of before and after null
-    
-    c = sorted(nulldata.items(), key = lambda x: x[1]['timestamp'])
-    
-    a = [(key,nulldata[key]['timestamp']) for key in nulldata.keys()]
-    a.sort(key = itemgetter(1))
-    
-    #ref before and after measurements
-    #needs date in dict
-    
-
-    #print(nulldata)
-
-#read data
-#plot nulls
+    #plotdata
+    #save nulldata
+    #save refdata
 
 
 
