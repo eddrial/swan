@@ -4,6 +4,8 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import datetime as dt
+from operator import itemgetter
 
 #set plot styles
 #plt.rc('font', family='serif', serif='Times')
@@ -23,7 +25,9 @@ def read_data(directoryname, blocktype):
         if datfile.startswith(blocktype) and datfile.endswith('.dat'):
             f = open(directoryname+'\\'+datfile[0:-4]+'.log', "r")
             d = np.loadtxt(directoryname + '\\' +datfile)
-            resultdict[datfile[0:-4]] = {'logfile' : f.read(), 'data' : d}
+            lfile = f.readlines()
+            tstamp = dt.datetime(int(lfile[0][-5:-1]),int(lfile[0][-8:-6]),int(lfile[0][-11:-9]),int(lfile[1][-9:-7]),int(lfile[1][-6:-4]),int(lfile[1][-3:-1]))
+            resultdict[datfile[0:-4]] = {'logfile' : lfile, 'data' : d, 'timestamp' : tstamp}
             f.close()
             
             
@@ -70,6 +74,31 @@ def maxmin_data(datadictionary):
         i = i+1
         
     return MaxMinYZ
+
+#refine data
+def refinedata(meas, null, ref):
+    
+    #for item in meas, get timestamp
+    for key in meas:
+        ts = meas[key]['timestamp']
+        #find null before/after
+        nullkeys = timeneighbours(timestmp, null)
+        
+    #find ref before
+    #find ref after
+    refkeys = timeneighbours(timestmp, ref)
+    
+    meas[key]['bgsub'] = databackgroundsubtracted
+    
+    meas[key]['refnormal'] = datarefnormalised
+    
+    
+    return meas
+
+def timeneighbours(timestmp, dict):
+    keys = ['a','b']
+    
+    return keys
 
 #second function. Plot null measurements
 
@@ -255,14 +284,27 @@ def plotrefdata(datadictionary):
 if __name__ == '__main__':
     nulldata = read_data('M:\Work\Measurements\UE56SESA','nu')
     refdata = read_data('M:\Work\Measurements\UE56SESA','r')
+    measdata = read_data('M:\Work\Measurements\UE56SESA','0')
     
     #n1 = plotnulldata(nulldata)
     #n1.savefig('M:\Work\Measurements\UE56SESA\nullplot.pdf')
     
     r1a, r1b = plotrefdata(refdata)
-    r1a.savefig('M:\Work\Measurements\UE56SESA\\refplot.pdf')
+    r1a.savefig('M:\Work\Measurements\UE56SESA\\refblockplot1.pdf')
+    r1b.savefig('M:\Work\Measurements\UE56SESA\\refblockplot2.pdf')
     
     #null before and after measurements
+    #pass in measdict, nulldict, refdict, return measdict enhanced with refnormalised and averagenull
+    refined_data = refinedata(measdata, nulldata, refdata)
+    
+     
+    #subtract to average of before and after null
+    
+    c = sorted(nulldata.items(), key = lambda x: x[1]['timestamp'])
+    
+    a = [(key,nulldata[key]['timestamp']) for key in nulldata.keys()]
+    a.sort(key = itemgetter(1))
+    
     #ref before and after measurements
     #needs date in dict
     
