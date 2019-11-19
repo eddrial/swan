@@ -43,6 +43,21 @@ def mean_data(datadictionary):
     
     return meandarray
 
+def std_data(datadictionary):
+    d = len(datadictionary)
+    bw = next(iter(datadictionary.values()))['data'].shape
+    
+    darray = np.zeros((bw[0],bw[1],d))
+    i = 0
+    for meas in datadictionary:
+        darray[:,:,i] = datadictionary[meas]['data']
+        i = i + 1
+    
+    stdarray = darray.std(axis = 2)
+    
+    return stdarray
+
+
 def maxmin_data(datadictionary):
     i = 0
     MaxMinYZ = np.zeros((4,len(datadictionary)))
@@ -115,6 +130,7 @@ def plotnulldata(datadictionary):
 def plotrefdata(datadictionary):
     #mean of collecte data
     meandarray = mean_data(datadictionary)
+    stdarray = std_data(datadictionary)
     
     #max of collected data
     MaxMinYZ = maxmin_data(datadictionary)
@@ -126,11 +142,10 @@ def plotrefdata(datadictionary):
     
     #create the figure with nice margins
     fig, axs = plt.subplots(3,2, sharex = False, sharey = False)
-    fig.subplots_adjust(left=.15, bottom=.16, right=.85, top=.85)
+    fig.subplots_adjust(left=.15, bottom=.16, right=.85, top= 0.9, wspace = 0.7, hspace = 0.6)
     fig.set_size_inches(width, height)
     fig.suptitle('RefBlock Field Integral Measurements for UE56SESAME Block Measurements')
-    
-    plt.subplots_adjust(top= 0.9, wspace = 1, hspace = 0.6)
+
     
     #Direct Field Integrals
     
@@ -155,10 +170,10 @@ def plotrefdata(datadictionary):
     axs[0,0].plot(meandarray[:,0],meandarray[:,1],'r-')
     axs[0,1].plot(meandarray[:,0],meandarray[:,2],'r-')
     
-        #Difference Field Integrals: signal - mean
+    #Difference Field Integrals: signal - mean
     
     axs[1,0].set_ylim([-.01, .01])
-    axs[1,0].set_title('Vertical Field Integrals Variation')
+    axs[1,0].set_title('Vertical Field Integrals\nVariation from Mean')
     axs[1,0].set_xlabel('z(mm)')
     axs[1,0].set_ylabel('IBydx(Tmm)')
 #    axs[1,0].set_yticks(np.arange(-.01,.01,.002))
@@ -166,7 +181,7 @@ def plotrefdata(datadictionary):
     axs[1,0].grid(which = 'major')
     
     axs[1,1].set_ylim([-.01, .01])
-    axs[1,1].set_title('Horizontal Field Integrals Variation')
+    axs[1,1].set_title('Horizontal Field Integrals\nVariation from Mean')
     axs[1,1].set_xlabel('z(mm)')
     axs[1,1].set_ylabel('IBzdx(Tmm)')
     axs[1,1].grid(which = 'major')
@@ -175,36 +190,64 @@ def plotrefdata(datadictionary):
         axs[1,0].plot(datadictionary[meas]['data'][:,0],meandarray[:,1]-datadictionary[meas]['data'][:,1])
         axs[1,1].plot(datadictionary[meas]['data'][:,0],meandarray[:,2]-datadictionary[meas]['data'][:,2])
     
-    #plot max/min of each curve
-
-    
-#    axs[2,0].set_ylim([-.01, .01])
-    axs[2,0].set_title('Max/Min Vertical Field\n Integral Variation')
-    axs[2,0].set_xlabel('Block#')
-    axs[2,0].set_ylabel('Max IBydx(Tmm)', color = 'r')
-    axs20twin = axs[2,0].twinx()
-    axs20twin.set_ylabel('Min IBydx(Tmm)', color = 'b')
-    
+    #Standard Deviation of Field Integrals
+    axs[2,0].set_ylim([0, .005])
+    axs[2,0].set_title('Vertical Field Integrals\nStandard Deviation')
+    axs[2,0].set_xlabel('z(mm)')
+    axs[2,0].set_ylabel('IBydx(Tmm)')
 #    axs[1,0].set_yticks(np.arange(-.01,.01,.002))
 #    axs[1,0].set_yticks(np.arange(-.01,.01,.0005), minor=True)
     axs[2,0].grid(which = 'major')
+    axs[2,0].text(-40,0.003,'Mean Value of\nStandard Deviation\n{:10.4f}'.format(stdarray[:,1].mean()))
     
-#    axs[2,1].set_ylim([-.01, .01])
-    axs[2,1].set_title('Max/Min Horizontal Field\n Integrals Variation')
-    axs[2,1].set_xlabel('Block #')
-    axs[2,1].set_ylabel('Max IBzdx(Tmm)', color = 'r')
-    axs[2,1].grid(which = 'major')
-    axs21twin = axs[2,1].twinx()
-    axs21twin.set_ylabel('Min IBzdx(Tmm)', color = 'b')
+    axs[2,1].set_ylim([0, .005])
+    axs[2,1].set_title('Horizontal Field Integrals\nStandard Deviation')
+    axs[2,1].set_xlabel('z(mm)')
+    axs[2,1].set_ylabel('IBzdx(Tmm)')
+    axs[2,1].grid(which = 'major')    
+    axs[2,1].text(-40,0.003,'Mean Value of\nStandard Deviation\n{:10.4f}'.format(stdarray[:,2].mean()))
     
-    axs[2,0].plot(np.arange(len(MaxMinYZ[0,:])),MaxMinYZ[0,:], 'r-')
-    axs20twin.plot(np.arange(len(MaxMinYZ[0,:])),MaxMinYZ[1,:],'b-')
-    axs[2,1].plot(np.arange(len(MaxMinYZ[0,:])),MaxMinYZ[2,:],'r-')
-    axs21twin.plot(np.arange(len(MaxMinYZ[0,:])),MaxMinYZ[3,:], 'b-')
+    axs[2,0].plot(datadictionary[meas]['data'][:,0],stdarray[:,1])
+    axs[2,1].plot(datadictionary[meas]['data'][:,0],stdarray[:,2])
+    
+    
+    #plot max/min of each curve
+
+    #set up plot
+    # set width and height
+    width = 7
+    height = 3
+    
+    #create the figure with nice margins
+    fig2, axs2 = plt.subplots(1,2, sharex = True, sharey = False)
+    fig2.subplots_adjust(left=.15, bottom=.16, right=.85, top= 0.7, wspace = 0.75, hspace = 0.6)
+    fig2.set_size_inches(width, height)
+    fig2.suptitle('Standard Deviation of Field Integral Measurements\n for UE56SESAME Reference Block Measurements')
+
+    
+
+    axs2[0].set_title('Max/Min Vertical Field\n Integral Variation')
+    axs2[0].set_xlabel('Block#')
+    axs2[0].set_ylabel('Max IBydx(Tmm)', color = 'r')
+    axs0twin = axs2[0].twinx()
+    axs0twin.set_ylabel('Min IBydx(Tmm)', color = 'b')
+    axs2[0].grid(which = 'major')
+    
+    axs2[1].set_title('Max/Min Horizontal Field\n Integrals Variation')
+    axs2[1].set_xlabel('Block #')
+    axs2[1].set_ylabel('Max IBzdx(Tmm)', color = 'r')
+    axs2[1].grid(which = 'major')
+    axs1twin = axs2[1].twinx()
+    axs1twin.set_ylabel('Min IBzdx(Tmm)', color = 'b')
+    
+    axs2[0].plot(np.arange(len(MaxMinYZ[0,:])),MaxMinYZ[0,:], 'r-')
+    axs0twin.plot(np.arange(len(MaxMinYZ[0,:])),MaxMinYZ[1,:],'b-')
+    axs2[1].plot(np.arange(len(MaxMinYZ[0,:])),MaxMinYZ[2,:],'r-')
+    axs1twin.plot(np.arange(len(MaxMinYZ[0,:])),MaxMinYZ[3,:], 'b-')
     
     plt.show()
     
-    return fig
+    return fig,fig2
     
 
 #main program
@@ -216,8 +259,12 @@ if __name__ == '__main__':
     #n1 = plotnulldata(nulldata)
     #n1.savefig('M:\Work\Measurements\UE56SESA\nullplot.pdf')
     
-    r1 = plotrefdata(refdata)
-    r1.savefig('M:\Work\Measurements\UE56SESA\\refplot.pdf')
+    r1a, r1b = plotrefdata(refdata)
+    r1a.savefig('M:\Work\Measurements\UE56SESA\\refplot.pdf')
+    
+    #null before and after measurements
+    #ref before and after measurements
+    #needs date in dict
     
 
     #print(nulldata)
