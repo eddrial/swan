@@ -33,28 +33,28 @@ def read_data(directoryname, blocktype):
             
     return resultdict
 
-def mean_data(datadictionary):
+def mean_data(datadictionary, datakey):
     d = len(datadictionary)
-    bw = next(iter(datadictionary.values()))['data'].shape
+    bw = next(iter(datadictionary.values()))[datakey].shape
     
     darray = np.zeros((bw[0],bw[1],d))
     i = 0
     for meas in datadictionary:
-        darray[:,:,i] = datadictionary[meas]['data']
+        darray[:,:,i] = datadictionary[meas][datakey]
         i = i + 1
     
     meandarray = darray.mean(axis = 2)
     
     return meandarray
 
-def std_data(datadictionary):
+def std_data(datadictionary, datakey):
     d = len(datadictionary)
-    bw = next(iter(datadictionary.values()))['data'].shape
+    bw = next(iter(datadictionary.values()))[datakey].shape
     
     darray = np.zeros((bw[0],bw[1],d))
     i = 0
     for meas in datadictionary:
-        darray[:,:,i] = datadictionary[meas]['data']
+        darray[:,:,i] = datadictionary[meas][datakey]
         i = i + 1
     
     stdarray = darray.std(axis = 2)
@@ -62,15 +62,15 @@ def std_data(datadictionary):
     return stdarray
 
 
-def maxmin_data(datadictionary):
+def maxmin_data(datadictionary, datakey):
     i = 0
     MaxMinYZ = np.zeros((4,len(datadictionary)))
     
     for meas in datadictionary:
-        MaxMinYZ[0,i] = max(datadictionary[meas]['data'][:,1])
-        MaxMinYZ[1,i] = min(datadictionary[meas]['data'][:,1])
-        MaxMinYZ[2,i] = max(datadictionary[meas]['data'][:,2])
-        MaxMinYZ[3,i] = min(datadictionary[meas]['data'][:,2])
+        MaxMinYZ[0,i] = max(datadictionary[meas][datakey][:,1])
+        MaxMinYZ[1,i] = min(datadictionary[meas][datakey][:,1])
+        MaxMinYZ[2,i] = max(datadictionary[meas][datakey][:,2])
+        MaxMinYZ[3,i] = min(datadictionary[meas][datakey][:,2])
         i = i+1
         
     return MaxMinYZ
@@ -80,8 +80,8 @@ def maxmin_data(datadictionary):
 def backgroundsub(null,nullkeys):
     pass
 
-def calcday0ref(dict):
-    copydict = dict.copy()
+def calcday0ref(dicto):
+    copydict = dicto.copy()
     dictlist = [(key,copydict[key]['timestamp']) for key in copydict.keys()]
     dictlist.sort(key = itemgetter(1))
     
@@ -95,7 +95,7 @@ def calcday0ref(dict):
     for i in range(np.argmax(a)-2,len(a)):
         copydict.pop(dictlist[i][0])
     
-    day0ref = mean_data(dict)
+    day0ref = mean_data(copydict, 'data')
     
     return day0ref
     
@@ -148,12 +148,12 @@ def timeneighbours(timestmp, dict):
 
 #second function. Plot null measurements
 
-def plotnulldata(datadictionary):
+def plotnulldata(datadictionary, datakey):
     #TODO Plot Mean Data
     #Calculate Mean Data
     #meanvals = np.zeros((datadictionary[],len(datadictionary)))
     
-    meandarray = mean_data(datadictionary)
+    meandarray = mean_data(datadictionary, datakey)
     
     #set up plot
     # set width and height
@@ -202,13 +202,13 @@ def plotnulldata(datadictionary):
     return fig
     #save it as pdf
     
-def plotrefdata(datadictionary):
-    #mean of collecte data
-    meandarray = mean_data(datadictionary)
-    stdarray = std_data(datadictionary)
+def plotrefdata(datadictionary, datakey):
+    #mean of collected data
+    meandarray = mean_data(datadictionary, datakey )
+    stdarray = std_data(datadictionary, datakey)
     
     #max of collected data
-    MaxMinYZ = maxmin_data(datadictionary)
+    MaxMinYZ = maxmin_data(datadictionary, datakey)
     
     #set up plot
     # set width and height
@@ -239,15 +239,15 @@ def plotrefdata(datadictionary):
     axs[0,1].grid(which = 'major')
     
     for meas in datadictionary:
-        axs[0,0].plot(datadictionary[meas]['data'][:,0],datadictionary[meas]['data'][:,1])
-        axs[0,1].plot(datadictionary[meas]['data'][:,0],datadictionary[meas]['data'][:,2])
+        axs[0,0].plot(datadictionary[meas][datakey][:,0],datadictionary[meas][datakey][:,1])
+        axs[0,1].plot(datadictionary[meas][datakey][:,0],datadictionary[meas][datakey][:,2])
     
     axs[0,0].plot(meandarray[:,0],meandarray[:,1],'r-')
     axs[0,1].plot(meandarray[:,0],meandarray[:,2],'r-')
     
     #Difference Field Integrals: signal - mean
     
-    axs[1,0].set_ylim([-.01, .01])
+    axs[1,0].set_ylim([-.125, .125])
     axs[1,0].set_title('Vertical Field Integrals\nVariation from Mean')
     axs[1,0].set_xlabel('z(mm)')
     axs[1,0].set_ylabel('IBydx(Tmm)')
@@ -255,15 +255,15 @@ def plotrefdata(datadictionary):
 #    axs[1,0].set_yticks(np.arange(-.01,.01,.0005), minor=True)
     axs[1,0].grid(which = 'major')
     
-    axs[1,1].set_ylim([-.01, .01])
+    axs[1,1].set_ylim([-.125, .125])
     axs[1,1].set_title('Horizontal Field Integrals\nVariation from Mean')
     axs[1,1].set_xlabel('z(mm)')
     axs[1,1].set_ylabel('IBzdx(Tmm)')
     axs[1,1].grid(which = 'major')
     
     for meas in datadictionary:
-        axs[1,0].plot(datadictionary[meas]['data'][:,0],meandarray[:,1]-datadictionary[meas]['data'][:,1])
-        axs[1,1].plot(datadictionary[meas]['data'][:,0],meandarray[:,2]-datadictionary[meas]['data'][:,2])
+        axs[1,0].plot(datadictionary[meas][datakey][:,0],meandarray[:,1]-datadictionary[meas][datakey][:,1])
+        axs[1,1].plot(datadictionary[meas][datakey][:,0],meandarray[:,2]-datadictionary[meas][datakey][:,2])
     
     #Standard Deviation of Field Integrals
     axs[2,0].set_ylim([0, .005])
@@ -282,8 +282,8 @@ def plotrefdata(datadictionary):
     axs[2,1].grid(which = 'major')    
     axs[2,1].text(-40,0.003,'Mean Value of\nStandard Deviation\n{:10.4f}'.format(stdarray[:,2].mean()))
     
-    axs[2,0].plot(datadictionary[meas]['data'][:,0],stdarray[:,1])
-    axs[2,1].plot(datadictionary[meas]['data'][:,0],stdarray[:,2])
+    axs[2,0].plot(datadictionary[meas][datakey][:,0],stdarray[:,1])
+    axs[2,1].plot(datadictionary[meas][datakey][:,0],stdarray[:,2])
     
     
     #plot max/min of each curve
@@ -332,10 +332,10 @@ if __name__ == '__main__':
     refdata = read_data('M:\Work\Measurements\UE56SESA','r')
     measdata = read_data('M:\Work\Measurements\UE56SESA','0')
     
-    #n1 = plotnulldata(nulldata)
+    n1 = plotnulldata(nulldata, 'data')
     #n1.savefig('M:\Work\Measurements\UE56SESA\nullplot.pdf')
     
-    #r1a, r1b = plotrefdata(refdata)
+    r1a, r1b = plotrefdata(refdata, 'data')
     #r1a.savefig('M:\Work\Measurements\UE56SESA\\refblockplot1.pdf')
     #r1b.savefig('M:\Work\Measurements\UE56SESA\\refblockplot2.pdf')
     
@@ -343,7 +343,29 @@ if __name__ == '__main__':
     #pass in measdict, nulldict, refdict, return measdict enhanced with refnormalised and averagenull
     refined_data = refinedata(measdata, nulldata, refdata)
     
+    #create part dict based on filter
+    while len(refined_data) > 0:
+        all_keys = refined_data.keys()
+        tmpkeys = [all_keys[i] for i in range(len(all_keys)) if all_keys[i][0:2] == all_keys[0][0:2]]
+        print tmpkeys
+        
+        tmp_dict = {}
+        tmp_dict = { your_key: refined_data[your_key] for your_key in tmpkeys }
+        [refined_data.pop(mykey) for mykey in tmpkeys]
+        print(len(refined_data))
+        
+        #m1a, m1b = plotrefdata(tmp_dict, 'bgsub')
+        m2a, m2b = plotrefdata(tmp_dict, 'refnormal')
+        
+
+    
     #plotdata
+    
+    #list keys
+    #create sublists for keys that begin with two numbers
+    
+    
+    
     #save nulldata
     #save refdata
 
