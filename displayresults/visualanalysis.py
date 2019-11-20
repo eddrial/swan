@@ -1,6 +1,15 @@
 #module to read in data and log files of stretched wire bench
 #results taken from SW2 etc
 
+#TODO read in SW2 log to assign magnet numbers
+#wrap as function with folder path as input
+#bailout if SW2 log is not present
+#spline fit & save
+
+
+#ambition
+#save to hdf5
+
 import os
 import numpy as np
 import matplotlib.pyplot as plt
