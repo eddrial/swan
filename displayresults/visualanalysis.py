@@ -15,14 +15,14 @@ plt.rc('ytick', labelsize=8)
 plt.rc('axes', labelsize=8)
 
 #first function. Read data.
-def read_data(directoryname, blocktype):
-    print ('reading '+blocktype+' data from ' + directoryname)
+def read_data(directoryname, blocktype1, blocktype2 = 'defstring'):
+    print ('reading '+blocktype1+' data from ' + directoryname)
     
     resultdict = {}
     #for file in directory
     #make a dict of measurements. Dict has meas number, logfile, data
     for datfile in os.listdir(directoryname):
-        if datfile.startswith(blocktype) and datfile.endswith('.dat'):
+        if (datfile.startswith(blocktype1) or datfile.startswith(blocktype2)) and datfile.endswith('.dat'):
             f = open(directoryname+'\\'+datfile[0:-4]+'.log', "r")
             d = np.loadtxt(directoryname + '\\' +datfile)
             lfile = f.readlines()
@@ -203,6 +203,14 @@ def plotnulldata(datadictionary, datakey):
     #save it as pdf
     
 def plotrefdata(datadictionary, datakey):
+    #plot titles etc
+    
+    
+    #maxlimit and minlimit lines for variation plots
+    maxlimit = np.array([[-50,0.1],[50,0.1]])
+    minlimit = np.array([[-50,-0.1],[50,-0.1]])
+            
+    
     #mean of collected data
     meandarray = mean_data(datadictionary, datakey )
     stdarray = std_data(datadictionary, datakey)
@@ -219,11 +227,25 @@ def plotrefdata(datadictionary, datakey):
     fig, axs = plt.subplots(3,2, sharex = False, sharey = False)
     fig.subplots_adjust(left=.15, bottom=.16, right=.85, top= 0.9, wspace = 0.7, hspace = 0.6)
     fig.set_size_inches(width, height)
-    fig.suptitle('RefBlock Field Integral Measurements for UE56SESAME Block Measurements')
-
     
+    if datadictionary == refdata:
+        titlesubject = 'Reference Block'
+        axs[1,0].set_ylim([-.0125, .0125])
+        axs[1,1].set_ylim([-.0125, .0125])
+        axs[2,0].set_ylim([0, .005])
+        axs[2,1].set_ylim([0, .005])
+        
+    elif datadictionary == tmp_dict:
+        titlesubject = 'Type ' + datadictionary.keys()[0][0:2] + ' Series'
+        axs[1,0].set_ylim([-.125, .125])
+        axs[1,1].set_ylim([-.125, .125])
+        axs[2,0].set_ylim([0, .05])
+        axs[2,1].set_ylim([0, .05])
+    
+    fig.suptitle(titlesubject + ' Field Integral Measurements for UE56SESAME Blocks')    
     #Direct Field Integrals
     
+    axs[0,0].set_xlim([-42.5,42.5])
     axs[0,0].set_ylim([-5, 5])
     axs[0,0].set_title('Vertical Field Integrals')
     axs[0,0].set_xlabel('z(mm)')
@@ -232,6 +254,7 @@ def plotrefdata(datadictionary, datakey):
     axs[0,0].set_yticks(np.arange(-5,5,.5), minor=True)
     axs[0,0].grid(which = 'major')
     
+    axs[0,1].set_xlim([-42.5,42.5])
     axs[0,1].set_ylim([-5, 5])
     axs[0,1].set_title('Horizontal Field Integrals')
     axs[0,1].set_xlabel('z(mm)')
@@ -247,26 +270,44 @@ def plotrefdata(datadictionary, datakey):
     
     #Difference Field Integrals: signal - mean
     
-    axs[1,0].set_ylim([-.125, .125])
+    axs[1,0].set_xlim([-42.5,42.5])
     axs[1,0].set_title('Vertical Field Integrals\nVariation from Mean')
     axs[1,0].set_xlabel('z(mm)')
     axs[1,0].set_ylabel('IBydx(Tmm)')
 #    axs[1,0].set_yticks(np.arange(-.01,.01,.002))
 #    axs[1,0].set_yticks(np.arange(-.01,.01,.0005), minor=True)
     axs[1,0].grid(which = 'major')
+    axs[1,0].plot(minlimit[:,0],minlimit[:,1],color='red', linewidth = 2, linestyle = 'dashed')
+    axs[1,0].plot(maxlimit[:,0],maxlimit[:,1],color='red', linewidth = 2, linestyle = 'dashed')
     
-    axs[1,1].set_ylim([-.125, .125])
+    axs[1,1].set_xlim([-42.5,42.5])
     axs[1,1].set_title('Horizontal Field Integrals\nVariation from Mean')
     axs[1,1].set_xlabel('z(mm)')
     axs[1,1].set_ylabel('IBzdx(Tmm)')
     axs[1,1].grid(which = 'major')
+    axs[1,1].plot(minlimit[:,0],minlimit[:,1],color='red', linewidth = 2, linestyle = 'dashed')
+    axs[1,1].plot(maxlimit[:,0],maxlimit[:,1],color='red', linewidth = 2, linestyle = 'dashed')
     
+    outofspec = []
     for meas in datadictionary:
         axs[1,0].plot(datadictionary[meas][datakey][:,0],meandarray[:,1]-datadictionary[meas][datakey][:,1])
         axs[1,1].plot(datadictionary[meas][datakey][:,0],meandarray[:,2]-datadictionary[meas][datakey][:,2])
+        
+        #if abs 1 or 2 > 0.1 then 
+        if max(abs(meandarray[:,1]-datadictionary[meas][datakey][:,1]))>0.1 or max(abs(meandarray[:,2]-datadictionary[meas][datakey][:,2]))>0.1:
+            outofspec.append(meas)
+    outofspecstr = ''
+    for mag in outofspec:
+        outofspecstr += mag + ', '
+    
+    fig.text(0.1,0.1,'Set of '+str(len(datadictionary))+' Type '+datadictionary.keys()[0][0:2]+' Blocks have been measured')
+    
+    if len(outofspec) > 0:
+        fig.text(0.1,0.08,'The Measurements ' + outofspecstr + ' Need Redoing')
+    else:
+        fig.text(0.1,0.08, 'All Block Measurements were Within Specification')
     
     #Standard Deviation of Field Integrals
-    axs[2,0].set_ylim([0, .005])
     axs[2,0].set_title('Vertical Field Integrals\nStandard Deviation')
     axs[2,0].set_xlabel('z(mm)')
     axs[2,0].set_ylabel('IBydx(Tmm)')
@@ -275,7 +316,6 @@ def plotrefdata(datadictionary, datakey):
     axs[2,0].grid(which = 'major')
     axs[2,0].text(-40,0.003,'Mean Value of\nStandard Deviation\n{:10.4f}'.format(stdarray[:,1].mean()))
     
-    axs[2,1].set_ylim([0, .005])
     axs[2,1].set_title('Horizontal Field Integrals\nStandard Deviation')
     axs[2,1].set_xlabel('z(mm)')
     axs[2,1].set_ylabel('IBzdx(Tmm)')
@@ -297,7 +337,7 @@ def plotrefdata(datadictionary, datakey):
     fig2, axs2 = plt.subplots(1,2, sharex = True, sharey = False)
     fig2.subplots_adjust(left=.15, bottom=.16, right=.85, top= 0.7, wspace = 0.75, hspace = 0.6)
     fig2.set_size_inches(width, height)
-    fig2.suptitle('Standard Deviation of Field Integral Measurements\n for UE56SESAME Reference Block Measurements')
+    fig2.suptitle(titlesubject + ' Field Integral Measurements for UE56SESAME Blocks\nMax and Min of Series')
 
     
 
@@ -330,7 +370,7 @@ def plotrefdata(datadictionary, datakey):
 if __name__ == '__main__':
     nulldata = read_data('M:\Work\Measurements\UE56SESA','nu')
     refdata = read_data('M:\Work\Measurements\UE56SESA','r')
-    measdata = read_data('M:\Work\Measurements\UE56SESA','0')
+    measdata = read_data('M:\Work\Measurements\UE56SESA','0','1')
     
     n1 = plotnulldata(nulldata, 'data')
     #n1.savefig('M:\Work\Measurements\UE56SESA\nullplot.pdf')
@@ -347,21 +387,33 @@ if __name__ == '__main__':
     while len(refined_data) > 0:
         all_keys = refined_data.keys()
         tmpkeys = [all_keys[i] for i in range(len(all_keys)) if all_keys[i][0:2] == all_keys[0][0:2]]
-        print tmpkeys
         
         tmp_dict = {}
         tmp_dict = { your_key: refined_data[your_key] for your_key in tmpkeys }
         [refined_data.pop(mykey) for mykey in tmpkeys]
-        print(len(refined_data))
         
         #m1a, m1b = plotrefdata(tmp_dict, 'bgsub')
         m2a, m2b = plotrefdata(tmp_dict, 'refnormal')
+        
+        fnameroot = 'blockseries'+tmp_dict.keys()[0][:2]
+        
+        m2a.savefig('M:\Work\Measurements\UE56SESA\devfolder\\'+fnameroot +'stats.pdf')
+        m2b.savefig('M:\Work\Measurements\UE56SESA\devfolder\\'+fnameroot +'peaksvariation.pdf')
+        
+        for mykey1 in tmpkeys:
+            np.savetxt('M:\Work\Measurements\UE56SESA\devfolder\\'+mykey1 +'.da1', tmp_dict[mykey1]['bgsub'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
+            np.savetxt('M:\Work\Measurements\UE56SESA\devfolder\\'+mykey1 +'.da3', tmp_dict[mykey1]['refnormal'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
+        
+        print (1)
         
 
     
     #plotdata
     
     #list keys
+    #read list
+    #make dictionary
+    #for meas in measdict append magnetnumber to measdict
     #create sublists for keys that begin with two numbers
     
     
