@@ -1,5 +1,7 @@
 #module to read in data and log files of stretched wire bench
 #results taken from SW2 etc
+#python 2.7
+#Todo - Python 3
 
 #TODO read in SW2 log to assign magnet numbers
 #wrap as function with folder path as input
@@ -9,6 +11,9 @@
 
 #ambition
 #save to hdf5
+#clean up graph settings
+
+#comparison of two
 
 import os
 import numpy as np
@@ -41,6 +46,26 @@ def read_data(directoryname, blocktype1, blocktype2 = 'defstring'):
             
             
     return resultdict
+
+def read_MFMSW2(directoryname):
+    print ('Loading Measurement History MFM_SW2.LST')
+    
+    measdict = {}
+    f = open(directoryname+'\\MFM_SW2.LST', "r")
+    d = f.readlines()
+    for line in d:
+        thisline = line.split()
+        measdict[thisline[1][:-4]] = {'magname': thisline[0], 'datestamp': thisline[2], 'timestamp': thisline[3]}
+    
+    f.close()
+    
+    return measdict
+
+def duplicated(mtdict):
+    #find duplicated magnet names in list
+    
+    pass
+    
 
 def mean_data(datadictionary, datakey):
     d = len(datadictionary)
@@ -377,9 +402,12 @@ def plotrefdata(datadictionary, datakey):
 #main program
 
 if __name__ == '__main__':
-    nulldata = read_data('M:\Work\Measurements\UE56SESA','nu')
-    refdata = read_data('M:\Work\Measurements\UE56SESA','r')
-    measdata = read_data('M:\Work\Measurements\UE56SESA','0','1')
+    measdatabase = read_MFMSW2(r'M:\Work\Measurements\UE56SESA')
+    duplicates = duplicated(measdatabase)
+    
+    nulldata = read_data(r'M:\Work\Measurements\UE56SESA','nu')
+    refdata = read_data(r'M:\Work\Measurements\UE56SESA','r')
+    measdata = read_data(r'M:\Work\Measurements\UE56SESA','0','1')
     
     n1 = plotnulldata(nulldata, 'data')
     #n1.savefig('M:\Work\Measurements\UE56SESA\nullplot.pdf')
@@ -406,14 +434,16 @@ if __name__ == '__main__':
         
         fnameroot = 'blockseries'+tmp_dict.keys()[0][:2]
         
-        m2a.savefig('M:\Work\Measurements\UE56SESA\devfolder\\'+fnameroot +'stats.pdf')
-        m2b.savefig('M:\Work\Measurements\UE56SESA\devfolder\\'+fnameroot +'peaksvariation.pdf')
+        m2a.savefig(r'M:\Work\Measurements\UE56SESA\devfolder\\'+fnameroot +'stats.pdf')
+        m2b.savefig(r'M:\Work\Measurements\UE56SESA\devfolder\\'+fnameroot +'peaksvariation.pdf')
         
         for mykey1 in tmpkeys:
-            np.savetxt('M:\Work\Measurements\UE56SESA\devfolder\\'+mykey1 +'.da1', tmp_dict[mykey1]['bgsub'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
-            np.savetxt('M:\Work\Measurements\UE56SESA\devfolder\\'+mykey1 +'.da3', tmp_dict[mykey1]['refnormal'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
+            np.savetxt(r'M:\Work\Measurements\UE56SESA\devfolder\\'+mykey1 +'.da1', tmp_dict[mykey1]['bgsub'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
+            np.savetxt(r'M:\Work\Measurements\UE56SESA\devfolder\\'+mykey1 +'.da3', tmp_dict[mykey1]['refnormal'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
         
-        print (1)
+        print (all_keys[i])
+        
+    
         
 
     
