@@ -61,10 +61,29 @@ def read_MFMSW2(directoryname):
     
     return measdict
 
-def duplicated(mtdict):
+def duplicated(thisdict):
     #find duplicated magnet names in list
+    #but not for null, test, ref etc...
+    duplicated_dict = {}
     
-    pass
+    for k, v in thisdict.items():
+        duplicated_dict.setdefault(v['magname'],set()).add(k)
+    
+    print len(duplicated_dict)
+    
+    for k, v in duplicated_dict.items():
+        if len(v) == 1: 
+            duplicated_dict.pop(k)
+            
+    print len(duplicated_dict)
+        
+    for k, v in duplicated_dict.items():
+        if k[0].isdigit() == False:
+            duplicated_dict.pop(k)
+            
+    print len(duplicated_dict)
+    
+    return duplicated_dict
     
 
 def mean_data(datadictionary, datakey):
