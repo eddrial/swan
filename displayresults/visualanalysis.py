@@ -288,6 +288,19 @@ def plotrefdata(datadictionary, datakey):
         axs[2,0].set_ylim([0, .005])
         axs[2,1].set_ylim([0, .005])
         
+    elif datadictionary == compare_dict:
+        s = str()
+        for key in datadictionary:
+            if len(s) == 0:
+                s+= key
+            else:
+                s+= ', '+key
+        titlesubject = 'Out of Specification Measurements ' + s +'\n'
+        axs[1,0].set_ylim([-.0125, .0125])
+        axs[1,1].set_ylim([-.0125, .0125])
+        axs[2,0].set_ylim([0, .005])
+        axs[2,1].set_ylim([0, .005])
+        
     elif datadictionary == tmp_dict:
         titlesubject = 'Type ' + datadictionary.keys()[0][0:2] + ' Series'
         axs[1,0].set_ylim([-.125, .125])
@@ -342,23 +355,52 @@ def plotrefdata(datadictionary, datakey):
     axs[1,1].plot(maxlimit[:,0],maxlimit[:,1],color='red', linewidth = 2, linestyle = 'dashed')
     
     outofspec = []
-    for meas in datadictionary:
-        axs[1,0].plot(datadictionary[meas][datakey][:,0],meandarray[:,1]-datadictionary[meas][datakey][:,1])
-        axs[1,1].plot(datadictionary[meas][datakey][:,0],meandarray[:,2]-datadictionary[meas][datakey][:,2])
+    
+    if datadictionary == compare_dict:
+        for meas in datadictionary:
+            axs[1,0].plot(datadictionary[meas][datakey][:,0],meandarray[:,1]-datadictionary[meas][datakey][:,1])
+            axs[1,1].plot(datadictionary[meas][datakey][:,0],meandarray[:,2]-datadictionary[meas][datakey][:,2])
+            
+            #if abs 1 or 2 > 0.1 then 
+            if max(abs(meandarray[:,1]-datadictionary[meas][datakey][:,1]))>0.1 or max(abs(meandarray[:,2]-datadictionary[meas][datakey][:,2]))>0.01:
+                outofspec.append(meas)
+        outofspecstr = ''
+        for mag in outofspec:
+            outofspecstr += mag + ', '
         
-        #if abs 1 or 2 > 0.1 then 
-        if max(abs(meandarray[:,1]-datadictionary[meas][datakey][:,1]))>0.1 or max(abs(meandarray[:,2]-datadictionary[meas][datakey][:,2]))>0.1:
-            outofspec.append(meas)
-    outofspecstr = ''
-    for mag in outofspec:
-        outofspecstr += mag + ', '
+        #if compare dictionary
+        #if comparisons are all ok, later measurement discarded
+        #otherwise 'further analysis required
+        
+        fig.text(0.1,0.1,'Block ' + str(datadictionary[datadictionary.keys()[0]]['magname']) + ' has been measured ' + str(len(datadictionary)) + ' times')
     
-    fig.text(0.1,0.1,'Set of '+str(len(datadictionary))+' Type '+datadictionary.keys()[0][0:2]+' Blocks have been measured')
+        if len(outofspec) > 0:
+            fig.text(0.1,0.08,'The Measurements of Block' + str(datadictionary[datadictionary.keys()[0]]['magname']) + ' Need Further Investigation')
+        else:
+            fig.text(0.1,0.08, 'Block ' + str(datadictionary[datadictionary.keys()[0]]['magname']) + ' Measurements Consistent')
     
-    if len(outofspec) > 0:
-        fig.text(0.1,0.08,'The Measurements ' + outofspecstr + ' Need Redoing')
     else:
-        fig.text(0.1,0.08, 'All Block Measurements were Within Specification')
+        for meas in datadictionary:
+            axs[1,0].plot(datadictionary[meas][datakey][:,0],meandarray[:,1]-datadictionary[meas][datakey][:,1])
+            axs[1,1].plot(datadictionary[meas][datakey][:,0],meandarray[:,2]-datadictionary[meas][datakey][:,2])
+            
+            #if abs 1 or 2 > 0.1 then 
+            if max(abs(meandarray[:,1]-datadictionary[meas][datakey][:,1]))>0.1 or max(abs(meandarray[:,2]-datadictionary[meas][datakey][:,2]))>0.1:
+                outofspec.append(meas)
+        outofspecstr = ''
+        for mag in outofspec:
+            outofspecstr += str(datadictionary[mag]['magname']) + ', '
+        
+        #if compare dictionary
+        #if comparisons are all ok, later measurement discarded
+        #otherwise 'further analysis required
+        
+        fig.text(0.1,0.1,'Set of '+str(len(datadictionary))+' Type '+datadictionary.keys()[0][0:2]+' Blocks have been measured')
+    
+        if len(outofspec) > 0:
+            fig.text(0.1,0.08,'The Measurements of Blocks' + outofspecstr + ' Need Redoing')
+        else:
+            fig.text(0.1,0.08, 'All Block Measurements were Within Specification')
     
     #Standard Deviation of Field Integrals
     axs[2,0].set_title('Vertical Field Integrals\nStandard Deviation')
@@ -388,7 +430,7 @@ def plotrefdata(datadictionary, datakey):
     
     #create the figure with nice margins
     fig2, axs2 = plt.subplots(1,2, sharex = True, sharey = False)
-    fig2.subplots_adjust(left=.15, bottom=.16, right=.85, top= 0.7, wspace = 0.75, hspace = 0.6)
+    fig2.subplots_adjust(left=.15, bottom=.16, right=.85, top= 0.6, wspace = 0.75, hspace = 0.6)
     fig2.set_size_inches(width, height)
     fig2.suptitle(titlesubject + ' Field Integral Measurements for UE56SESAME Blocks\nMax and Min of Series')
 
@@ -424,9 +466,19 @@ if __name__ == '__main__':
     measdatabase = read_MFMSW2(r'M:\Work\Measurements\UE56SESA')
     duplicates = duplicated(measdatabase)
     
+    nulldata = {}
+    refdata = {}
+    measdata = {}
+    compare_dict = {}
+    
+    
+    
     nulldata = read_data(r'M:\Work\Measurements\UE56SESA','nu')
     refdata = read_data(r'M:\Work\Measurements\UE56SESA','r')
     measdata = read_data(r'M:\Work\Measurements\UE56SESA','0','1')
+    
+    for key in measdata:
+        measdata[key]['magname'] = measdatabase[key]['magname']
     
     n1 = plotnulldata(nulldata, 'data')
     #n1.savefig('M:\Work\Measurements\UE56SESA\nullplot.pdf')
@@ -438,6 +490,28 @@ if __name__ == '__main__':
     #null before and after measurements
     #pass in measdict, nulldict, refdict, return measdict enhanced with refnormalised and averagenull
     refined_data = refinedata(measdata, nulldata, refdata)
+    
+    #for each key of duplicates
+    print(1)
+    
+    for key in duplicates:
+        compare_dict = {}
+        for val in duplicates[key]:
+            compare_dict[val] = refined_data[val]
+        
+        a2a, a2b = plotrefdata(compare_dict, 'refnormal')
+        
+        fnameroot = 'block'+compare_dict[compare_dict.keys()[0]]['magname']+'compare'
+        
+        a2a.savefig(r'M:\Work\Measurements\UE56SESA\devfolder\\'+fnameroot +'stats.pdf')
+        a2b.savefig(r'M:\Work\Measurements\UE56SESA\devfolder\\'+fnameroot +'peaksvariation.pdf')
+            
+    #for each item of value
+    #make dictionary from refined_data
+    #pop key
+    #plotrefdata little dict
+    
+    #if data pass the filter - pop off extraneous (latest) keys
     
     #create part dict based on filter
     while len(refined_data) > 0:
