@@ -398,7 +398,7 @@ def plotrefdata(datadictionary, datakey):
         fig.text(0.1,0.1,'Set of '+str(len(datadictionary))+' Type '+datadictionary.keys()[0][0:2]+' Blocks have been measured')
     
         if len(outofspec) > 0:
-            fig.text(0.1,0.08,'The Measurements of Blocks' + outofspecstr + ' Need Redoing')
+            fig.text(0.1,0.08,'The Measurements of Blocks' + outofspecstr + ' Need Redoing') #Check if they have been redone...!
         else:
             fig.text(0.1,0.08, 'All Block Measurements were Within Specification')
     
@@ -503,8 +503,8 @@ if __name__ == '__main__':
         
         fnameroot = 'block'+compare_dict[compare_dict.keys()[0]]['magname']+'compare'
         
-        a2a.savefig(r'M:\Work\Measurements\UE56SESA\devfolder\\'+fnameroot +'stats.pdf')
-        a2b.savefig(r'M:\Work\Measurements\UE56SESA\devfolder\\'+fnameroot +'peaksvariation.pdf')
+        a2a.savefig(r'M:\Work\Measurements\UE56SESA\final_results\\'+fnameroot +'stats.pdf')
+        a2b.savefig(r'M:\Work\Measurements\UE56SESA\final_results\\'+fnameroot +'peaksvariation.pdf')
             
     #for each item of value
     #make dictionary from refined_data
@@ -527,14 +527,14 @@ if __name__ == '__main__':
         
         fnameroot = 'blockseries'+tmp_dict.keys()[0][:2]
         
-        m2a.savefig(r'M:\Work\Measurements\UE56SESA\devfolder\\'+fnameroot +'stats.pdf')
-        m2b.savefig(r'M:\Work\Measurements\UE56SESA\devfolder\\'+fnameroot +'peaksvariation.pdf')
+        m2a.savefig(r'M:\Work\Measurements\UE56SESA\final_results\\'+fnameroot +'stats.pdf')
+        m2b.savefig(r'M:\Work\Measurements\UE56SESA\final_results\\'+fnameroot +'peaksvariation.pdf')
         
         for mykey1 in tmpkeys:
-            np.savetxt(r'M:\Work\Measurements\UE56SESA\devfolder\\'+mykey1 +'.da1', tmp_dict[mykey1]['bgsub'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
-            np.savetxt(r'M:\Work\Measurements\UE56SESA\devfolder\\'+mykey1 +'.da3', tmp_dict[mykey1]['refnormal'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
+            np.savetxt(r'M:\Work\Measurements\UE56SESA\final_results\\'+mykey1 +'.da1', tmp_dict[mykey1]['bgsub'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
+            np.savetxt(r'M:\Work\Measurements\UE56SESA\final_results\\'+mykey1 +'.da3', tmp_dict[mykey1]['refnormal'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
         
-        print (all_keys[i])
+        #print (all_keys[i])
         
     
         
