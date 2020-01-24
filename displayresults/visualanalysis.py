@@ -47,7 +47,7 @@ def read_data(directoryname, blocktype1, blocktype2 = 'defstring'):
             
     return resultdict
 
-def read_MFMSW2(directoryname):
+def read_MFMSW2(directoryname):   #transferred
     print ('Loading Measurement History MFM_SW2.LST')
     
     measdict = {}
