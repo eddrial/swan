@@ -12,11 +12,29 @@ if __name__ == '__main__':
     
     measurementlist = measdb.read_MFMSW2(r'M:\Work\Measurements\UE56SESA')
     
-    measdb.read_text_files_to_database()
+    #measdb.read_text_files_to_database()
     
     
     
     for key in measdb.datadict:
         print(measdb.datadict[key]['packettype'])
     
-    measdb.pickle_data()
+    #measdb.pickle_data()
+    
+    measdb.unpickle_data()
+    
+    for key in measdb.datadict:
+        print(key)
+        
+    measdb.pickle_data_append()
+        
+    print('blah blah')
+    
+    for key in measdb.measdict:
+        print(key)
+        
+    #TODOs - 
+    #refine_data
+    #plot diff data types
+    #save plots
+    #parse different types of packet from database

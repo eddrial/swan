@@ -69,19 +69,19 @@ def duplicated(thisdict):
     for k, v in thisdict.items():
         duplicated_dict.setdefault(v['magname'],set()).add(k)
     
-    print len(duplicated_dict)
+    print (duplicated_dict).__len__()
     
     for k, v in duplicated_dict.items():
         if len(v) == 1: 
             duplicated_dict.pop(k)
             
-    print len(duplicated_dict)
+    print (duplicated_dict).__len__()
         
     for k, v in duplicated_dict.items():
         if k[0].isdigit() == False:
             duplicated_dict.pop(k)
             
-    print len(duplicated_dict)
+    print (duplicated_dict).__len__()
     
     return duplicated_dict
     

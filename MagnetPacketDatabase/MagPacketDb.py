@@ -56,9 +56,20 @@ class PacketDatabase(object):
             self.datadict[key] = {'logfile' : lfile, 'data' : d, 'timestamp' : tstamp, 'packettype' : key[0:2]}
             
         return
+    
+    def pickle_data_append(self):
+        for key in self.datadict:
+            self.measdict.pop(key)
+        self.read_text_files_to_database()
+        
         
     def pickle_data(self):
-        with open(self.directoryname + '\\meas_data.pkl', 'wb') as output:
+        with open(self.directoryname + '\\' + self.measdbasefile, 'wb') as output:
     # Pickle dictionary using protocol 0.
             pickle.dump(self.datadict, output)
+            
+    def unpickle_data(self):
+        with open(self.directoryname + '\\' + self.measdbasefile, 'rb') as fp:
+            self.datadict = pickle.load(fp)
+        
         
