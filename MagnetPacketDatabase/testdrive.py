@@ -38,19 +38,11 @@ if __name__ == '__main__':
     
     measdb.measIDtoPacketType()
     
+    measdb.refinedata()
+    
     print(1)
     
-    '''for key in measdb.datadict:
-        ptype = measdb.datadict[key]['packettype']
-        if ptype in ptypedict:
-            ptypedict[ptype].append(key)
-            #append value to key 
-            #ptypedict[ptype] = key 
-        else:
-            ptypedict[ptype] = [key]
-        
-                
-        print(key)'''
+
         
     #from large dictionary make dict of types
     #for key find type

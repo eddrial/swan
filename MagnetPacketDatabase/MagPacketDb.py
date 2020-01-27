@@ -9,6 +9,8 @@ import numpy as np
 import h5py
 import datetime as dt
 import pickle
+#from visualanalysis import timeneighbours
+from operator import itemgetter
 
 class PacketDatabase(object):
     '''
@@ -28,6 +30,8 @@ class PacketDatabase(object):
         self.measdict = {} #measurement dictionary - from MFM_SW2
         self.datadict = {} #data dictionary - from individual log files identified from measdict
         self.ptypedict = {} #shuffle keys to be packet type - precursor to extracting type databases?
+        self.nulldict = {} #null = background measurement dictionaries
+        self.refdict = {} # reference packet measurements
         
     def read_MFMSW2(self, directoryname):
         print ('Loading Measurement History' + self.measlistname)
@@ -84,3 +88,99 @@ class PacketDatabase(object):
                 self.ptypedict[ptype].append(key)            
             else:
                 self.ptypedict[ptype] = [key]
+    
+    def extractNullDict(self):
+        for meas in self.ptypedict['nu']:
+            self.nulldict[meas] = self.datadict[meas]
+    
+    def extractRefDict(self):
+        for meas in self.ptypedict['r0']:
+            self.refdict[meas] = self.datadict[meas]
+    
+    #Refine Data - extend datadict
+    def refinedata(self):
+        self.extractNullDict()
+        self.extractRefDict()
+        for key in self.ptypedict:
+            if (key == 'nu' or key == 'r0' or key == 'te'):
+                pass
+            else:
+                '''
+                for key in dict
+                for meas in list
+                get timestamp of meas
+                
+                '''
+                for meas in self.ptypedict[key]:
+                    ts = self.datadict[meas]['timestamp']
+                    #find null before/after
+                    nullkeys = self.timeneighbours(ts, self.nulldict)
+                    
+                    #find ref before/after
+                    refkeys = self.timeneighbours(ts, self.refdict)
+                    
+                    #do background sub
+                    bgsub = np.zeros(self.datadict[meas]['data'].shape)
+                    bgsub[:,0] = self.datadict[meas]['data'][:,0]
+                    bgsub[:,1:3] = self.datadict[meas]['data'][:,1:3] - (self.nulldict[nullkeys[0]]['data'][:,1:3]+self.nulldict[nullkeys[1]]['data'][:,1:3])/2.0
+                    self.datadict[meas]['bgsub'] = bgsub
+                    
+                    #do refnormalisation
+                    refnormal = np.zeros(self.datadict[meas]['data'].shape)
+                    refnormal[:,0] = self.datadict[meas]['data'][:,0]
+                    day0ref = self.calcday0ref()
+                    refnormal[:,1:3] = np.divide(np.multiply(bgsub[:,1:3],day0ref[:,1:3]), (self.refdict[refkeys[0]]['data'][:,1:3]+self.refdict[refkeys[1]]['data'][:,1:3])/2.0)
+                    self.datadict[meas]['refnormal'] = refnormal
+                    
+        
+            #if ref do nout
+            #if anythingelse
+            
+    def timeneighbours(self, timestmp, thedict):
+    #this is ugly as sin
+        dictlist = [(key,thedict[key]['timestamp']) for key in thedict.keys()]
+        dictlist.sort(key = itemgetter(1))
+        a = np.zeros(len(dictlist))
+        
+        for i in range(len(a)):
+            a[i]= timestmp<dictlist[i][1]
+        
+        keys = [dictlist[np.argmax(a)-1][0],dictlist[np.argmax(a)][0]]
+        
+        return keys       
+    
+    def calcday0ref(self):
+        copydict = self.refdict.copy()
+        dictlist = [(key,copydict[key]['timestamp']) for key in copydict.keys()]
+        dictlist.sort(key = itemgetter(1))
+        
+        a = np.zeros(len(dictlist))
+        
+        day0 = copydict[dictlist[0][0]]['timestamp'].date()
+        
+        for i in range(len(a)):
+            a[i] = day0 < dictlist[i][1].date()
+        
+        for i in range(np.argmax(a)-2,len(a)):
+            copydict.pop(dictlist[i][0])
+        
+        day0ref = self.mean_data(copydict, 'data')
+        
+        return day0ref
+    
+    def mean_data(self, datadictionary, datakey):
+        d = len(datadictionary)
+        bw = next(iter(datadictionary.values()))[datakey].shape
+        
+        darray = np.zeros((bw[0],bw[1],d))
+        i = 0
+        for meas in datadictionary:
+            darray[:,:,i] = datadictionary[meas][datakey]
+            i = i + 1
+        
+        meandarray = darray.mean(axis = 2)
+    
+        return meandarray
+        
+
+    
