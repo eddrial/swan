@@ -8,30 +8,56 @@ from MagPacketDb import PacketDatabase as pd
 import numpy as np
 
 if __name__ == '__main__':
+    #create class
     measdb = pd(r'M:\Work\Measurements\UE56SESA')
     
+    #read measurement list
     measurementlist = measdb.read_MFMSW2(r'M:\Work\Measurements\UE56SESA')
     
-    #measdb.read_text_files_to_database()
-    
-    
+    #read files into measurement database
+    measdb.read_text_files_to_database()
     
     for key in measdb.datadict:
         print(measdb.datadict[key]['packettype'])
     
-    #measdb.pickle_data()
+    #pickle new db
+    measdb.pickle_data()
     
+    #unpickle and load data    
     measdb.unpickle_data()
     
     for key in measdb.datadict:
         print(key)
         
-    measdb.pickle_data_append()
+    #append to pickled data. 
+#    measdb.pickle_data_append()
         
     print('blah blah')
     
-    for key in measdb.measdict:
-        print(key)
+    #ptypedict = {}
+    
+    measdb.measIDtoPacketType()
+    
+    print(1)
+    
+    '''for key in measdb.datadict:
+        ptype = measdb.datadict[key]['packettype']
+        if ptype in ptypedict:
+            ptypedict[ptype].append(key)
+            #append value to key 
+            #ptypedict[ptype] = key 
+        else:
+            ptypedict[ptype] = [key]
+        
+                
+        print(key)'''
+        
+    #from large dictionary make dict of types
+    #for key find type
+    #if type is new, create dict entry
+    #else append key to type entry
+    
+    
         
     #TODOs - 
     #refine_data

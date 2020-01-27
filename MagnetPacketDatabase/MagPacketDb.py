@@ -25,8 +25,9 @@ class PacketDatabase(object):
         self.databasename = FolderPath[-8:]+'_Measurement_Database'
         self.measdbasefile = 'meas_data.pkl'
         
-        self.measdict = {}
-        self.datadict = {}
+        self.measdict = {} #measurement dictionary - from MFM_SW2
+        self.datadict = {} #data dictionary - from individual log files identified from measdict
+        self.ptypedict = {} #shuffle keys to be packet type - precursor to extracting type databases?
         
     def read_MFMSW2(self, directoryname):
         print ('Loading Measurement History' + self.measlistname)
@@ -57,6 +58,8 @@ class PacketDatabase(object):
             
         return
     
+    
+    #store and load pickles of data. File I/O
     def pickle_data_append(self):
         for key in self.datadict:
             self.measdict.pop(key)
@@ -72,4 +75,12 @@ class PacketDatabase(object):
         with open(self.directoryname + '\\' + self.measdbasefile, 'rb') as fp:
             self.datadict = pickle.load(fp)
         
-        
+    
+    #Database conversions
+    def measIDtoPacketType(self):
+        for key in self.datadict:
+            ptype = self.datadict[key]['packettype']
+            if ptype in self.ptypedict:
+                self.ptypedict[ptype].append(key)            
+            else:
+                self.ptypedict[ptype] = [key]
