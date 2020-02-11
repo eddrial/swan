@@ -16,6 +16,13 @@ if __name__ == '__main__':
     
     #read files into measurement database
     measdb.read_text_files_to_database()
+    #append magnet number to measurement data
+    measdb.magname_to_measname(measurementlist)
+    
+    #magdb from measdb
+    measdb.measIDtomagID()
+    
+    measdb.measIDtoPacketType()
     
     for key in measdb.datadict:
         print(measdb.datadict[key]['packettype'])
@@ -40,19 +47,18 @@ if __name__ == '__main__':
     
     measdb.refinedata()
     
+    measdb.pickle_data()
+    
+    #swap meas key to mag key
+    #create database of keys based on largest meas number
+    #plot groups
+    
     print(1)
     
 
         
-    #from large dictionary make dict of types
-    #for key find type
-    #if type is new, create dict entry
-    #else append key to type entry
-    
-    
         
     #TODOs - 
-    #refine_data
     #plot diff data types
     #save plots
     #parse different types of packet from database

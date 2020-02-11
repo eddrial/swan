@@ -32,6 +32,7 @@ class PacketDatabase(object):
         self.ptypedict = {} #shuffle keys to be packet type - precursor to extracting type databases?
         self.nulldict = {} #null = background measurement dictionaries
         self.refdict = {} # reference packet measurements
+        self.magdict = {} #shuffle keys to be magnet name
         
     def read_MFMSW2(self, directoryname):
         print ('Loading Measurement History' + self.measlistname)
@@ -62,7 +63,11 @@ class PacketDatabase(object):
             
         return
     
-    
+    def magname_to_measname(self, measurement_list):
+        for key in self.measdict:
+            self.datadict[key]['magname'] = measurement_list[key]['magname']
+            
+
     #store and load pickles of data. File I/O
     def pickle_data_append(self):
         for key in self.datadict:
@@ -97,6 +102,14 @@ class PacketDatabase(object):
         for meas in self.ptypedict['r0']:
             self.refdict[meas] = self.datadict[meas]
     
+    def measIDtomagID(self):
+        for key in self.datadict:
+            mname = self.datadict[key]['magname']
+            if mname in self.magdict:
+                self.magdict[mname].append(key)            
+            else:
+                self.magdict[mname] = [key]
+    
     #Refine Data - extend datadict
     def refinedata(self):
         self.extractNullDict()
@@ -113,6 +126,7 @@ class PacketDatabase(object):
                 '''
                 for meas in self.ptypedict[key]:
                     ts = self.datadict[meas]['timestamp']
+                    
                     #find null before/after
                     nullkeys = self.timeneighbours(ts, self.nulldict)
                     
