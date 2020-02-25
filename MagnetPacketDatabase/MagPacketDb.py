@@ -6,11 +6,11 @@ Created on 24 Jan 2020
 
 import os
 import numpy as np
-import h5py
 import datetime as dt
 import pickle
 #from visualanalysis import timeneighbours
 from operator import itemgetter
+import matplotlib.pyplot as plt
 
 class PacketDatabase(object):
     '''
@@ -33,6 +33,7 @@ class PacketDatabase(object):
         self.nulldict = {} #null = background measurement dictionaries
         self.refdict = {} # reference packet measurements
         self.magdict = {} #shuffle keys to be magnet name
+        self.ptypedictmean = {} #Database of packet-type mean
         
     def read_MFMSW2(self, directoryname):
         print ('Loading Measurement History' + self.measlistname)
@@ -90,9 +91,16 @@ class PacketDatabase(object):
         for key in self.datadict:
             ptype = self.datadict[key]['packettype']
             if ptype in self.ptypedict:
-                self.ptypedict[ptype].append(key)            
+                if (ptype == 'nu' or ptype == 'r0' or ptype == 'te'):
+                    self.ptypedict[ptype].append(key)
+                else:
+                    if (max(self.magdict[self.datadict[key]['magname']])) not in self.ptypedict[ptype]:
+                        self.ptypedict[ptype].append(max(self.magdict[self.datadict[key]['magname']]))            
             else:
-                self.ptypedict[ptype] = [key]
+                if (ptype == 'nu' or ptype == 'r0' or ptype == 'te'):
+                    self.ptypedict[ptype] = [key]
+                else: 
+                    self.ptypedict[ptype] = [max(self.magdict[self.datadict[key]['magname']])]
     
     def extractNullDict(self):
         for meas in self.ptypedict['nu']:
@@ -195,6 +203,23 @@ class PacketDatabase(object):
         meandarray = darray.mean(axis = 2)
     
         return meandarray
-        
-
     
+    def mean_sets(self):
+        for typeset in self.ptypedict:
+            meandata = None
+            if typeset == 'te' or typeset == 'r0' or typeset == 'nu':
+                pass
+            else:
+                
+                for meas in self.ptypedict[typeset]:
+                    if meandata is None:
+                        meandata = self.datadict[meas]['refnormal']
+                    else:
+                        meandata[:,1:] += self.datadict[meas]['refnormal'][:,1:]
+                meandata[:,1:] /= len(self.ptypedict[typeset])
+                self.ptypedictmean[typeset + 'mean'] = meandata
+                
+                
+            print(self.ptypedict[typeset])
+            
+            
