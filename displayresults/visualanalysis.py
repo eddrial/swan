@@ -69,19 +69,19 @@ def duplicated(thisdict):
     for k, v in thisdict.items():
         duplicated_dict.setdefault(v['magname'],set()).add(k)
     
-    print (duplicated_dict).__len__()
+    print (duplicated_dict.__len__())
     
-    for k, v in duplicated_dict.items():
+    for k, v in list(duplicated_dict.items()):
         if len(v) == 1: 
             duplicated_dict.pop(k)
             
-    print (duplicated_dict).__len__()
+    print (duplicated_dict.__len__())
         
-    for k, v in duplicated_dict.items():
+    for k, v in list(duplicated_dict.items()):
         if k[0].isdigit() == False:
             duplicated_dict.pop(k)
             
-    print (duplicated_dict).__len__()
+    print (duplicated_dict.__len__())
     
     return duplicated_dict
     
@@ -145,7 +145,11 @@ def calcday0ref(dicto):
     for i in range(len(a)):
         a[i] = day0 < dictlist[i][1].date()
     
-    for i in range(np.argmax(a)-2,len(a)):
+    if np.argmax(a)<3:
+        start = 3
+    else: start = np.argmax(a)
+    
+    for i in range(start-2,len(a)):
         copydict.pop(dictlist[i][0])
     
     day0ref = mean_data(copydict, 'data')
@@ -217,7 +221,7 @@ def plotnulldata(datadictionary, datakey):
     fig, axs = plt.subplots(1,2, sharex = True, sharey = False)
     fig.subplots_adjust(left=.15, bottom=.16, right=.85, top=.85)
     fig.set_size_inches(width, height)
-    fig.suptitle('Background Field Integral Measurements for UE56SESAME Block Measurements')
+    fig.suptitle('Background Field Integral Measurements for UE51 Block Measurements')
     
     plt.subplots_adjust(top= 0.8, wspace = 0.4)
     
@@ -302,13 +306,13 @@ def plotrefdata(datadictionary, datakey):
         axs[2,1].set_ylim([0, .005])
         
     elif datadictionary == tmp_dict:
-        titlesubject = 'Type ' + datadictionary.keys()[0][0:2] + ' Series'
+        titlesubject = 'Type ' + list(datadictionary.keys())[0][0:2] + ' Series'
         axs[1,0].set_ylim([-.125, .125])
         axs[1,1].set_ylim([-.125, .125])
         axs[2,0].set_ylim([0, .05])
         axs[2,1].set_ylim([0, .05])
     
-    fig.suptitle(titlesubject + ' Field Integral Measurements for UE56SESAME Blocks')    
+    fig.suptitle(titlesubject + ' Field Integral Measurements for UE51 Blocks')    
     #Direct Field Integrals
     
     axs[0,0].set_xlim([-42.5,42.5])
@@ -372,12 +376,12 @@ def plotrefdata(datadictionary, datakey):
         #if comparisons are all ok, later measurement discarded
         #otherwise 'further analysis required
         
-        fig.text(0.1,0.1,'Block ' + str(datadictionary[datadictionary.keys()[0]]['magname']) + ' has been measured ' + str(len(datadictionary)) + ' times')
+        fig.text(0.1,0.1,'Block ' + str(datadictionary[list(datadictionary.keys())[0]]['magname']) + ' has been measured ' + str(len(datadictionary)) + ' times')
     
         if len(outofspec) > 0:
-            fig.text(0.1,0.08,'The Measurements of Block' + str(datadictionary[datadictionary.keys()[0]]['magname']) + ' Need Further Investigation')
+            fig.text(0.1,0.08,'The Measurements of Block' + str(datadictionary[list(datadictionary.keys())[0]]['magname']) + ' Need Further Investigation')
         else:
-            fig.text(0.1,0.08, 'Block ' + str(datadictionary[datadictionary.keys()[0]]['magname']) + ' Measurements Consistent')
+            fig.text(0.1,0.08, 'Block ' + str(datadictionary[list(datadictionary.keys())[0]]['magname']) + ' Measurements Consistent')
     
     else:
         for meas in datadictionary:
@@ -395,7 +399,7 @@ def plotrefdata(datadictionary, datakey):
         #if comparisons are all ok, later measurement discarded
         #otherwise 'further analysis required
         
-        fig.text(0.1,0.1,'Set of '+str(len(datadictionary))+' Type '+datadictionary.keys()[0][0:2]+' Blocks have been measured')
+        fig.text(0.1,0.1,'Set of '+str(len(datadictionary))+' Type '+list(datadictionary.keys())[0][0:2]+' Blocks have been measured')
     
         if len(outofspec) > 0:
             fig.text(0.1,0.08,'The Measurements of Blocks' + outofspecstr + ' Need Redoing') #Check if they have been redone...!
@@ -432,7 +436,7 @@ def plotrefdata(datadictionary, datakey):
     fig2, axs2 = plt.subplots(1,2, sharex = True, sharey = False)
     fig2.subplots_adjust(left=.15, bottom=.16, right=.85, top= 0.6, wspace = 0.75, hspace = 0.6)
     fig2.set_size_inches(width, height)
-    fig2.suptitle(titlesubject + ' Field Integral Measurements for UE56SESAME Blocks\nMax and Min of Series')
+    fig2.suptitle(titlesubject + ' Field Integral Measurements for UE51 Blocks\nMax and Min of Series')
 
     
 
@@ -463,7 +467,7 @@ def plotrefdata(datadictionary, datakey):
 #main program
 
 if __name__ == '__main__':
-    measdatabase = read_MFMSW2(r'M:\Work\Measurements\UE56SESA')
+    measdatabase = read_MFMSW2(r'M:\Work\Measurements\UE51\MFM\Blocks')
     duplicates = duplicated(measdatabase)
     
     nulldata = {}
@@ -473,9 +477,9 @@ if __name__ == '__main__':
     
     
     
-    nulldata = read_data(r'M:\Work\Measurements\UE56SESA','nu')
-    refdata = read_data(r'M:\Work\Measurements\UE56SESA','r')
-    measdata = read_data(r'M:\Work\Measurements\UE56SESA','0','1')
+    nulldata = read_data(r'M:\Work\Measurements\UE51\MFM\Blocks','nu')
+    refdata = read_data(r'M:\Work\Measurements\UE51\MFM\Blocks','r')
+    measdata = read_data(r'M:\Work\Measurements\UE51\MFM\Blocks','0','1')
     
     for key in measdata:
         measdata[key]['magname'] = measdatabase[key]['magname']
@@ -501,10 +505,10 @@ if __name__ == '__main__':
         
         a2a, a2b = plotrefdata(compare_dict, 'refnormal')
         
-        fnameroot = 'block'+compare_dict[compare_dict.keys()[0]]['magname']+'compare'
+        fnameroot = 'block'+compare_dict[list(compare_dict.keys())[0]]['magname']+'compare'
         
-        a2a.savefig(r'M:\Work\Measurements\UE56SESA\final_results\\'+fnameroot +'stats.pdf')
-        a2b.savefig(r'M:\Work\Measurements\UE56SESA\final_results\\'+fnameroot +'peaksvariation.pdf')
+        a2a.savefig(r'M:\Work\Measurements\UE51\MFM\Blocks\Analysis\\'+fnameroot +'stats.pdf')
+        a2b.savefig(r'M:\Work\Measurements\UE51\MFM\Blocks\Analysis\\'+fnameroot +'peaksvariation.pdf')
             
     #for each item of value
     #make dictionary from refined_data
@@ -516,7 +520,7 @@ if __name__ == '__main__':
     #create part dict based on filter
     while len(refined_data) > 0:
         all_keys = refined_data.keys()
-        tmpkeys = [all_keys[i] for i in range(len(all_keys)) if all_keys[i][0:2] == all_keys[0][0:2]]
+        tmpkeys = [list(all_keys)[i] for i in range(len(all_keys)) if list(all_keys)[i][0:2] == list(all_keys)[0][0:2]]
         
         tmp_dict = {}
         tmp_dict = { your_key: refined_data[your_key] for your_key in tmpkeys }
@@ -525,14 +529,14 @@ if __name__ == '__main__':
         #m1a, m1b = plotrefdata(tmp_dict, 'bgsub')
         m2a, m2b = plotrefdata(tmp_dict, 'refnormal')
         
-        fnameroot = 'blockseries'+tmp_dict.keys()[0][:2]
+        fnameroot = 'blockseries'+list(tmp_dict.keys())[0][:2]
         
-        m2a.savefig(r'M:\Work\Measurements\UE56SESA\final_results\\'+fnameroot +'stats.pdf')
-        m2b.savefig(r'M:\Work\Measurements\UE56SESA\final_results\\'+fnameroot +'peaksvariation.pdf')
+        m2a.savefig(r'M:\Work\Measurements\UE51\MFM\Blocks\Analysis\\'+fnameroot +'stats.pdf')
+        m2b.savefig(r'M:\Work\Measurements\UE51\MFM\Blocks\Analysis\\'+fnameroot +'peaksvariation.pdf')
         
         for mykey1 in tmpkeys:
-            np.savetxt(r'M:\Work\Measurements\UE56SESA\final_results\\'+mykey1 +'.da1', tmp_dict[mykey1]['bgsub'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
-            np.savetxt(r'M:\Work\Measurements\UE56SESA\final_results\\'+mykey1 +'.da3', tmp_dict[mykey1]['refnormal'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
+            np.savetxt(r'M:\Work\Measurements\UE51\MFM\Blocks\Analysis\\'+mykey1 +'.da1', tmp_dict[mykey1]['bgsub'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
+            np.savetxt(r'M:\Work\Measurements\UE51\MFM\Blocks\Analysis\\'+mykey1 +'.da3', tmp_dict[mykey1]['refnormal'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
         
         #print (all_keys[i])
         
