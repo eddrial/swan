@@ -29,7 +29,7 @@ plt.rc('ytick', labelsize=8)
 plt.rc('axes', labelsize=8)
 
 #first function. Read data.
-def read_data(directoryname, blocktype1, blocktype2 = 'defstring'):
+def read_data(directoryname, blocktype1, blocktype2 = 'defstring', mode = 'magnet'):
     print ('reading '+blocktype1+' data from ' + directoryname)
     
     resultdict = {}
@@ -306,13 +306,13 @@ def plotrefdata(datadictionary, datakey):
         axs[2,1].set_ylim([0, .005])
         
     elif datadictionary == tmp_dict:
-        titlesubject = 'Type ' + list(datadictionary.keys())[0][0:2] + ' Series'
+        titlesubject = 'Type ' + datadictionary[list(datadictionary.keys())[0]]['logfile'][3].split()[0][0:-2] + ' Series'
         axs[1,0].set_ylim([-.125, .125])
         axs[1,1].set_ylim([-.125, .125])
         axs[2,0].set_ylim([0, .05])
         axs[2,1].set_ylim([0, .05])
     
-    fig.suptitle(titlesubject + ' Field Integral Measurements for UE51 Blocks')    
+    fig.suptitle(titlesubject + ' Field Integral Measurements for glued UE56SESAME Blocks')    
     #Direct Field Integrals
     
     axs[0,0].set_xlim([-42.5,42.5])
@@ -399,7 +399,7 @@ def plotrefdata(datadictionary, datakey):
         #if comparisons are all ok, later measurement discarded
         #otherwise 'further analysis required
         
-        fig.text(0.1,0.1,'Set of '+str(len(datadictionary))+' Type '+list(datadictionary.keys())[0][0:2]+' Blocks have been measured')
+        fig.text(0.1,0.1,'Set of '+str(len(datadictionary))+' Type '+datadictionary[list(datadictionary.keys())[0]]['logfile'][3].split()[0][0:-2]+' Blocks have been measured')
     
         if len(outofspec) > 0:
             fig.text(0.1,0.08,'The Measurements of Blocks' + outofspecstr + ' Need Redoing') #Check if they have been redone...!
@@ -467,7 +467,12 @@ def plotrefdata(datadictionary, datakey):
 #main program
 
 if __name__ == '__main__':
-    measdatabase = read_MFMSW2(r'M:\Work\Measurements\UE51\MFM\Blocks')
+    
+    analysisdir = r'M:\Work\Measurements\UE56SESA\Keepers'
+#    analysisdir = r'M:\Work\Measurements\UE51\MFM\Blocks'
+
+    measdatabase = read_MFMSW2(analysisdir)
+
     duplicates = duplicated(measdatabase)
     
     nulldata = {}
@@ -477,26 +482,26 @@ if __name__ == '__main__':
     
     
     
-    nulldata = read_data(r'M:\Work\Measurements\UE51\MFM\Blocks','nu')
-    refdata = read_data(r'M:\Work\Measurements\UE51\MFM\Blocks','r')
-    measdata = read_data(r'M:\Work\Measurements\UE51\MFM\Blocks','0','1')
+    nulldata = read_data(analysisdir,'nu')
+    refdata = read_data(analysisdir,'rk')
+    measdata = read_data(analysisdir,'k0','k1', mode = 'keeper')
     
     for key in measdata:
         measdata[key]['magname'] = measdatabase[key]['magname']
     
     n1 = plotnulldata(nulldata, 'data')
-    #n1.savefig('M:\Work\Measurements\UE56SESA\nullplot.pdf')
+    #n1.savefig(analysisdir+'\Analysis\nullplot.pdf')
     
     r1a, r1b = plotrefdata(refdata, 'data')
-    #r1a.savefig('M:\Work\Measurements\UE56SESA\\refblockplot1.pdf')
-    #r1b.savefig('M:\Work\Measurements\UE56SESA\\refblockplot2.pdf')
+    #r1a.savefig(analysisdir+'\Analysis\refblockplot1.pdf')
+    #r1b.savefig(analysisdir+'\Analysis\refblockplot2.pdf')
     
     #null before and after measurements
     #pass in measdict, nulldict, refdict, return measdict enhanced with refnormalised and averagenull
     refined_data = refinedata(measdata, nulldata, refdata)
     
     #for each key of duplicates
-    print(1)
+#    print(1)
     
     for key in duplicates:
         compare_dict = {}
@@ -507,8 +512,8 @@ if __name__ == '__main__':
         
         fnameroot = 'block'+compare_dict[list(compare_dict.keys())[0]]['magname']+'compare'
         
-        a2a.savefig(r'M:\Work\Measurements\UE51\MFM\Blocks\Analysis\\'+fnameroot +'stats.pdf')
-        a2b.savefig(r'M:\Work\Measurements\UE51\MFM\Blocks\Analysis\\'+fnameroot +'peaksvariation.pdf')
+#        a2a.savefig(analysisdir+'\Analysis\\'+fnameroot +'stats.pdf')
+#        a2b.savefig(analysisdir+'\Analysis\\'+fnameroot +'peaksvariation.pdf')
             
     #for each item of value
     #make dictionary from refined_data
@@ -520,7 +525,7 @@ if __name__ == '__main__':
     #create part dict based on filter
     while len(refined_data) > 0:
         all_keys = refined_data.keys()
-        tmpkeys = [list(all_keys)[i] for i in range(len(all_keys)) if list(all_keys)[i][0:2] == list(all_keys)[0][0:2]]
+        tmpkeys = [list(all_keys)[i] for i in range(len(all_keys)) if refined_data[list(all_keys)[i]]['logfile'][3].split()[0][0:-2] == refined_data[list(all_keys)[0]]['logfile'][3].split()[0][0:-2]]
         
         tmp_dict = {}
         tmp_dict = { your_key: refined_data[your_key] for your_key in tmpkeys }
@@ -529,14 +534,14 @@ if __name__ == '__main__':
         #m1a, m1b = plotrefdata(tmp_dict, 'bgsub')
         m2a, m2b = plotrefdata(tmp_dict, 'refnormal')
         
-        fnameroot = 'blockseries'+list(tmp_dict.keys())[0][:2]
+        fnameroot = 'blockseries'+tmp_dict[list(tmp_dict.keys())[0]]['logfile'][3].split()[0][0:-2]
         
-        m2a.savefig(r'M:\Work\Measurements\UE51\MFM\Blocks\Analysis\\'+fnameroot +'stats.pdf')
-        m2b.savefig(r'M:\Work\Measurements\UE51\MFM\Blocks\Analysis\\'+fnameroot +'peaksvariation.pdf')
+#        m2a.savefig(analysisdir+'\Analysis\'+fnameroot +'stats.pdf')
+#        m2b.savefig(analysisdir+'\Analysis\'+fnameroot +'peaksvariation.pdf')
         
         for mykey1 in tmpkeys:
-            np.savetxt(r'M:\Work\Measurements\UE51\MFM\Blocks\Analysis\\'+mykey1 +'.da1', tmp_dict[mykey1]['bgsub'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
-            np.savetxt(r'M:\Work\Measurements\UE51\MFM\Blocks\Analysis\\'+mykey1 +'.da3', tmp_dict[mykey1]['refnormal'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
+            np.savetxt(analysisdir+'\Analysis\\'+mykey1 +'.da1', tmp_dict[mykey1]['bgsub'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
+            np.savetxt(analysisdir+'\Analysis\\'+mykey1 +'.da3', tmp_dict[mykey1]['refnormal'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
         
         #print (all_keys[i])
         
