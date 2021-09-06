@@ -19,6 +19,9 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import datetime as dt
+import copy
+import pickle
+from scipy.interpolate import UnivariateSpline
 from operator import itemgetter
 
 #set plot styles
@@ -46,6 +49,37 @@ def read_data(directoryname, blocktype1, blocktype2 = 'defstring', mode = 'magne
             
             
     return resultdict
+
+def save_data(directoryname, nulldata, nulldata_smoothed, refdata, refdata_smoothed, measdata, measdata_smoothed, refined_data, refined_data_smoothed):
+    dict_for_all = {}
+    dict_for_all['nulldata'] = nulldata
+    dict_for_all['nulldata_smoothed'] = nulldata_smoothed
+    dict_for_all['refdata'] = refdata
+    dict_for_all['refdata_smoothed'] = refdata_smoothed
+    dict_for_all['measdata'] = measdata
+    dict_for_all['measdata_smoothed'] = measdata_smoothed
+    dict_for_all['refined_data'] = refined_data
+    dict_for_all['refined_data_smoothed'] = refined_data_smoothed
+    
+    with open('{}\\pickled_data.dat'.format(directoryname),'wb') as fp:
+        pickle.dump(dict_for_all,fp,protocol=pickle.HIGHEST_PROTOCOL)
+        
+def load_all_data(directoryname):
+    
+    with open('{}\\pickled_data.dat'.format(directoryname),'rb') as fp:
+        dict_for_all = pickle.load(fp)
+    
+    nulldata = dict_for_all['nulldata']
+    nulldata_smoothed = dict_for_all['nulldata_smoothed']
+    refdata = dict_for_all['refdata']
+    refdata_smoothed = dict_for_all['refdata_smoothed']
+    measdata = dict_for_all['measdata']
+    measdata_smoothed = dict_for_all['measdata_smoothed']
+    refined_data = dict_for_all['refined_data']
+    refined_data_smoothed = dict_for_all['refined_data_smoothed']
+    
+    return nulldata, nulldata_smoothed, refdata, refdata_smoothed, measdata, measdata_smoothed, refined_data, refined_data_smoothed    
+    
 
 def read_MFMSW2(directoryname):   #transferred
     print ('Loading Measurement History MFM_SW2.LST')
@@ -156,7 +190,21 @@ def calcday0ref(dicto):
     
     return day0ref
     
+def smooth_data(rough_data):
+    smoothed_data = copy.deepcopy(rough_data)
     
+    for key in smoothed_data:
+        
+        spline1 = UnivariateSpline(smoothed_data[key]['data'][:,0],smoothed_data[key]['data'][:,1])
+        spline1.set_smoothing_factor(0.002)
+        
+        spline2 = UnivariateSpline(smoothed_data[key]['data'][:,0],smoothed_data[key]['data'][:,2])
+        spline2.set_smoothing_factor(0.002)
+        
+        smoothed_data[key]['data'][:,1] = spline1(smoothed_data[key]['data'][:,0])
+        smoothed_data[key]['data'][:,2] = spline2(smoothed_data[key]['data'][:,0])
+    
+    return smoothed_data
     
 
 def refinedata(meas, null, ref):
@@ -205,7 +253,7 @@ def timeneighbours(timestmp, dict):
 
 #second function. Plot null measurements
 
-def plotnulldata(datadictionary, datakey):
+def plotnulldata(datadictionary, datakey, dodisplay):
     #TODO Plot Mean Data
     #Calculate Mean Data
     #meanvals = np.zeros((datadictionary[],len(datadictionary)))
@@ -253,13 +301,13 @@ def plotnulldata(datadictionary, datakey):
     axs[0].plot(meandarray[:,0],meandarray[:,1],'r-')
     axs[1].plot(meandarray[:,0],meandarray[:,2],'r-')
     
-    
-    plt.show()
+    if dodisplay == True:
+        plt.show()
     
     return fig
     #save it as pdf
     
-def plotrefdata(datadictionary, datakey):
+def plotrefdata(datadictionary, datakey, dodisplay):
     #plot titles etc
     
     
@@ -312,7 +360,7 @@ def plotrefdata(datadictionary, datakey):
         axs[2,0].set_ylim([0, .05])
         axs[2,1].set_ylim([0, .05])
     
-    fig.suptitle(titlesubject + ' Field Integral Measurements for glued UE56SESAME Blocks')    
+    fig.suptitle(titlesubject + ' Field Integral Measurements for Diff UE56SESAME Blocks')    
     #Direct Field Integrals
     
     axs[0,0].set_xlim([-42.5,42.5])
@@ -436,7 +484,7 @@ def plotrefdata(datadictionary, datakey):
     fig2, axs2 = plt.subplots(1,2, sharex = True, sharey = False)
     fig2.subplots_adjust(left=.15, bottom=.16, right=.85, top= 0.6, wspace = 0.75, hspace = 0.6)
     fig2.set_size_inches(width, height)
-    fig2.suptitle(titlesubject + ' Field Integral Measurements for UE51 Blocks\nMax and Min of Series')
+    fig2.suptitle(titlesubject + ' Field Integral Measurements for Diff UE56SESA Blocks\nMax and Min of Series')
 
     
 
@@ -459,7 +507,8 @@ def plotrefdata(datadictionary, datakey):
     axs2[1].plot(np.arange(len(MaxMinYZ[0,:])),MaxMinYZ[2,:],'r-')
     axs1twin.plot(np.arange(len(MaxMinYZ[0,:])),MaxMinYZ[3,:], 'b-')
     
-    plt.show()
+    if dodisplay == True:
+        plt.show()
     
     return fig,fig2
     
@@ -469,6 +518,7 @@ def plotrefdata(datadictionary, datakey):
 if __name__ == '__main__':
     
     analysisdir = r'M:\Work\Measurements\UE56SESA\Keepers'
+    #analysisdir = r'M:\Work\Measurements\UE56SESA'
 #    analysisdir = r'M:\Work\Measurements\UE51\MFM\Blocks'
 
     measdatabase = read_MFMSW2(analysisdir)
@@ -483,37 +533,50 @@ if __name__ == '__main__':
     
     
     nulldata = read_data(analysisdir,'nu')
+    nulldata_smoothed = smooth_data(nulldata)
     refdata = read_data(analysisdir,'rk')
+#    refdata = read_data(analysisdir,'r')
+    refdata_smoothed = smooth_data(refdata)
     measdata = read_data(analysisdir,'k0','k1', mode = 'keeper')
+#    measdata = read_data(analysisdir,'0','1')
+    measdata_smoothed = smooth_data(measdata)
     
     for key in measdata:
         measdata[key]['magname'] = measdatabase[key]['magname']
     
-    n1 = plotnulldata(nulldata, 'data')
-    #n1.savefig(analysisdir+'\Analysis\nullplot.pdf')
+    #n1 = plotnulldata(nulldata, 'data')
+    #n1.savefig(analysisdir+'\\Analysis\\nullplot.pdf')
     
-    r1a, r1b = plotrefdata(refdata, 'data')
-    #r1a.savefig(analysisdir+'\Analysis\refblockplot1.pdf')
-    #r1b.savefig(analysisdir+'\Analysis\refblockplot2.pdf')
+    #r1a, r1b = plotrefdata(refdata, 'data')
+    #r1a.savefig(analysisdir+'\\Analysis\\refblockplot1.pdf')
+    #r1b.savefig(analysisdir+'\\Analysis\\refblockplot2.pdf')
     
     #null before and after measurements
     #pass in measdict, nulldict, refdict, return measdict enhanced with refnormalised and averagenull
     refined_data = refinedata(measdata, nulldata, refdata)
-    
+    refined_data_smoothed = refinedata(measdata_smoothed, nulldata_smoothed, refdata_smoothed)
     #for each key of duplicates
 #    print(1)
+
+    save_data(analysisdir,
+              nulldata, nulldata_smoothed,
+              refdata, refdata_smoothed,
+              measdata, measdata_smoothed,
+              refined_data, refined_data_smoothed)
+    
+    nulldata, nulldata_smoothed, refdata, refdata_smoothed, measdata, measdata_smoothed, refined_data, refined_data_smoothed = load_all_data(analysisdir)
     
     for key in duplicates:
         compare_dict = {}
         for val in duplicates[key]:
             compare_dict[val] = refined_data[val]
         
-        a2a, a2b = plotrefdata(compare_dict, 'refnormal')
+        a2a, a2b = plotrefdata(compare_dict, 'refnormal', dodisplay=False)
         
         fnameroot = 'block'+compare_dict[list(compare_dict.keys())[0]]['magname']+'compare'
         
-#        a2a.savefig(analysisdir+'\Analysis\\'+fnameroot +'stats.pdf')
-#        a2b.savefig(analysisdir+'\Analysis\\'+fnameroot +'peaksvariation.pdf')
+        a2a.savefig(analysisdir+'\Analysis\\'+fnameroot +'stats.png')
+        a2b.savefig(analysisdir+'\Analysis\\'+fnameroot +'peaksvariation.png')
             
     #for each item of value
     #make dictionary from refined_data
@@ -532,17 +595,24 @@ if __name__ == '__main__':
         [refined_data.pop(mykey) for mykey in tmpkeys]
         
         #m1a, m1b = plotrefdata(tmp_dict, 'bgsub')
-        m2a, m2b = plotrefdata(tmp_dict, 'refnormal')
+        m2a, m2b = plotrefdata(tmp_dict, 'refnormal', dodisplay=True)
         
         fnameroot = 'blockseries'+tmp_dict[list(tmp_dict.keys())[0]]['logfile'][3].split()[0][0:-2]
         
-#        m2a.savefig(analysisdir+'\Analysis\'+fnameroot +'stats.pdf')
-#        m2b.savefig(analysisdir+'\Analysis\'+fnameroot +'peaksvariation.pdf')
+        m2a.savefig(analysisdir+'\Analysis\\'+fnameroot +'stats.png')
+        m2b.savefig(analysisdir+'\Analysis\\'+fnameroot +'peaksvariation.png')
         
+        #for mykey1 in tmpkeys:
+        #    np.savetxt(analysisdir+'\Analysis\\'+mykey1 +'.da1', tmp_dict[mykey1]['bgsub'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
+        #    np.savetxt(analysisdir+'\Analysis\\'+mykey1 +'.da2', measdata_smoothed[mykey1]['refnormal'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
+        #    np.savetxt(analysisdir+'\Analysis\\'+mykey1 +'.da3', tmp_dict[mykey1]['refnormal'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
+        
+        i = 0
+        f = open(analysisdir+'\Analysis\BLOCLIST\\b'+fnameroot[-2:] +'.lst', 'w')
         for mykey1 in tmpkeys:
-            np.savetxt(analysisdir+'\Analysis\\'+mykey1 +'.da1', tmp_dict[mykey1]['bgsub'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
-            np.savetxt(analysisdir+'\Analysis\\'+mykey1 +'.da3', tmp_dict[mykey1]['refnormal'],fmt=('% 6.2f', '% 8.5f', '% 8.5f') )
-        
+            f.write('{0:4}\t{1}\t{2:>6s}.dat\t{3:>11s}.da1{4:>11s}.da2{5:>11s}.da3\n'.format(i+1,tmp_dict[mykey1]['magname'],mykey1,mykey1,mykey1,mykey1))
+            i+=1
+        f.close()
         #print (all_keys[i])
         
     
